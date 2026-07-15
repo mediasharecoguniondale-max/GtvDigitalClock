@@ -29,7 +29,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 20px; /* Reducido levemente para dar más espacio de pantalla */
+            padding: 20px; 
             transform: translate3d(0, 0, 0);
             -webkit-transform: translate3d(0, 0, 0);
             user-select: none;
@@ -45,7 +45,7 @@
             z-index: -2;
             will-change: transform;
             transform: translate3d(0, 0, 0);
-            background: linear-gradient(135deg, #0f172a 0%, #020617 100%); /* Fondo si falla el video */
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%); 
         }
 
         .dark-overlay {
@@ -58,19 +58,18 @@
             z-index: -1;
         }
 
-        /* Sección superior: Ahora ocupa el 65% de la altura total para empujar el reloj hacia arriba */
         .top-section {
             flex-grow: 1;
             display: flex;
-            align-items: center;
+            align-items: flex-start; 
             justify-content: center;
             width: 100%;
-            height: 65vh; 
+            height: 68vh; 
+            padding-top: 1vh; 
             margin-bottom: auto;
             position: relative;
         }
 
-        /* Contenedor del reloj con distribución elástica y alineación por base de línea */
         .clock-wrapper { 
             display: flex; 
             align-items: baseline; 
@@ -84,25 +83,23 @@
             -webkit-text-stroke: 4px #ffffff; 
             text-rendering: optimizeSpeed; 
             -webkit-font-smoothing: antialiased;
-            transition: color 0.2s ease;
+            transition: color 0.2s ease, text-shadow 0.2s ease; /* Transición suave */
             color: #00ffff; 
-            /* Aumentado a un límite de 52vh para que se vea sustancialmente más grande */
-            font-size: min(45vw, 78vh);
-            line-height: 0.85;
-            margin: 0;
+            font-size: min(45vw, 78vh); 
+            line-height: 0.72; 
+            margin-top: -1vh; 
         }
 
         #ampm { 
             font-family: 'Fastelar', 'Impact', sans-serif;
+            transition: color 0.2s ease;
             color: #77B8ED;
-            /* Escalado proporcionalmente más grande */
             font-size: min(6vw, 10vh);
             -webkit-text-stroke: 1px #ffffff; 
             align-self: flex-end;
-            margin-bottom: 3.5vh; 
+            margin-bottom: 2.5vh; 
         }
 
-        /* Bloque de Información: Altura reducida de 220px a 165px */
         .bottom-section {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -128,7 +125,7 @@
 
         .logo-display {
             position: absolute;
-            width: 55%; /* Reducido levemente para ajustarse al bloque más bajo */
+            width: 55%; 
             height: auto;
             max-height: 80%;
             opacity: 0.35; 
@@ -150,7 +147,7 @@
             position: relative;
             z-index: 1;
             text-align: center; 
-            font-size: 1.6rem; /* Reducido proporcionalmente */
+            font-size: 1.6rem; 
             font-weight: bold;
             line-height: 1.2; 
             text-shadow: 0px 4px 10px rgba(0,0,0,0.8);
@@ -166,7 +163,7 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(8px);
             border-radius: 16px;
-            padding: 12px 18px; /* Paddings reducidos */
+            padding: 12px 18px; 
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -183,8 +180,8 @@
             align-items: center;
             gap: 10px;
         }
-        .current-temp-container svg { width: 36px; height: 36px; } /* SVG más pequeño */
-        .current-temp { font-size: 2.3rem; font-weight: bold; } /* Fuente más compacta */
+        .current-temp-container svg { width: 36px; height: 36px; } 
+        .current-temp { font-size: 2.3rem; font-weight: bold; } 
         .feels-like { font-size: 0.85rem; opacity: 0.7; }
         .weather-condition-text { font-size: 1rem; font-weight: 500; }
         .weather-location {
@@ -298,7 +295,6 @@
             background: #3d5294;
         }
 
-        /* Banner discreto indicando actualización */
         #update-banner {
             position: absolute;
             bottom: 20px;
@@ -390,7 +386,6 @@
             <button class="btn-action" onclick="forceCheckUpdate()">Buscar Update ↻</button>
         </div>
 
-        <!-- SIMULADOR DE COLORES Y HORAS -->
         <div class="config-header" style="margin-top: 15px;">SIMULADOR DE COLORES Y SERVICIOS</div>
         
         <div id="sim-day-container" class="config-opt" style="display: none;">
@@ -430,16 +425,14 @@
     </div>
 
     <script>
-        // --- COLD CRASH PROTECTION ---
         window.addEventListener('unhandledrejection', function(event) {
             if (event.reason && (event.reason.name === 'AbortError' || event.reason.message === 'The operation was aborted.')) {
                 event.preventDefault();
-                console.warn('Silenced runtime AbortError rejection during active kiosk loop.');
             }
         });
 
-        // --- CONTROL DE VERSIONES PARA AUTO-ACTUALIZAR ---
-        const CURRENT_APP_VERSION = "1.0.6"; // Versión 1.0.6 empujada con ajustes de tamaño para la TV
+        // --- VERSIÓN 1.0.8: COLORES RESTAURADOS ---
+        const CURRENT_APP_VERSION = "1.0.8"; 
 
         let manualMode = false;
         let simulatedDay = 0; // 0 = Domingo, 3 = Miércoles
@@ -462,24 +455,15 @@
                     }
                 });
             }
-            
-            // Intervalo de revisión de código (cada 15 minutos)
             setInterval(checkAppUpdate, 15 * 60 * 1000);
-            
-            // Reinicio diario preventivo a las 3:00 AM
             scheduleDailyReload();
         });
 
-        // Activar pantalla completa al hacer doble click
-        document.body.addEventListener('dblclick', () => {
-            toggleFullScreen();
-        });
+        document.body.addEventListener('dblclick', () => { toggleFullScreen(); });
 
         function toggleFullScreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error al activar Fullscreen: ${err.message}`);
-                });
+                document.documentElement.requestFullscreen().catch(() => {});
             } else {
                 document.exitFullscreen();
             }
@@ -490,7 +474,6 @@
             document.getElementById('logo-svg').style.display = 'block';
         }
 
-        // --- SISTEMA AUTO-REFRESH ANTE CAMBIOS EN NETLIFY ---
         async function checkAppUpdate() {
             try {
                 const fetchUrl = window.location.origin + window.location.pathname + '?nocache=' + Date.now();
@@ -500,22 +483,12 @@
                 const text = await response.text();
                 const match = text.match(/const\s+CURRENT_APP_VERSION\s*=\s*["']([^"']+)["']/);
                 
-                if (match && match[1]) {
-                    const remoteVersion = match[1];
-                    console.log(`Versión actual: ${CURRENT_APP_VERSION} | Remota: ${remoteVersion}`);
-                    
-                    if (remoteVersion !== CURRENT_APP_VERSION) {
-                        const banner = document.getElementById('update-banner');
-                        banner.style.display = 'block';
-                        
-                        setTimeout(() => {
-                            window.location.href = window.location.origin + window.location.pathname + '?v=' + remoteVersion;
-                        }, 3000);
-                    }
+                if (match && match[1] && match[1] !== CURRENT_APP_VERSION) {
+                    const banner = document.getElementById('update-banner');
+                    banner.style.display = 'block';
+                    setTimeout(() => { window.location.href = window.location.origin + window.location.pathname + '?v=' + match[1]; }, 3000);
                 }
-            } catch (err) {
-                console.error("Error comprobando actualización:", err);
-            }
+            } catch (err) {}
         }
 
         function forceCheckUpdate() {
@@ -535,17 +508,8 @@
 
         function scheduleDailyReload() {
             const now = new Date();
-            const night = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate() + 1,
-                3, 0, 0
-            );
-            const msToMidnight = night.getTime() - now.getTime();
-            
-            setTimeout(() => {
-                window.location.reload();
-            }, msToMidnight);
+            const night = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 3, 0, 0);
+            setTimeout(() => { window.location.reload(); }, night.getTime() - now.getTime());
         }
 
         function togglePanel() { 
@@ -557,34 +521,22 @@
             manualMode = !isLive; 
             document.getElementById('manual-slider-container').style.display = isLive ? 'none' : 'flex';
             document.getElementById('sim-day-container').style.display = isLive ? 'none' : 'flex';
-            
-            if (!isLive) {
-                handleSimDayChange(document.getElementById('sim-day-select').value);
-            } else {
-                updateDisplay(); 
-            }
+            if (!isLive) handleSimDayChange(document.getElementById('sim-day-select').value);
+            else updateDisplay(); 
         }
 
         function handleSimDayChange(dayVal) {
             simulatedDay = parseInt(dayVal);
             const slider = document.getElementById('time-slider');
-            
             if (simulatedDay === 0) {
-                // Domingo: 7:30 AM a 1:00 PM
-                slider.min = 450;
-                slider.max = 780;
-                slider.value = 480; // Defecto 8:00 AM
+                slider.min = 450; slider.max = 780; slider.value = 480; 
                 document.getElementById('slider-min-label').innerText = "7:30 AM";
                 document.getElementById('slider-max-label').innerText = "1:00 PM";
             } else if (simulatedDay === 3) {
-                // Miércoles: 7:00 PM a 10:00 PM
-                slider.min = 1140;
-                slider.max = 1320;
-                slider.value = 1170; // Defecto 7:30 PM
+                slider.min = 1140; slider.max = 1320; slider.value = 1170; 
                 document.getElementById('slider-min-label').innerText = "7:00 PM";
                 document.getElementById('slider-max-label').innerText = "10:00 PM";
             }
-            
             simulatedMinutes = parseInt(slider.value);
             document.getElementById('slider-time-label').innerText = minutesToTimeStr(simulatedMinutes);
             updateDisplay();
@@ -611,13 +563,12 @@
             return { r, g, b };
         }
 
-        // Interpola colores de forma fluida
         function getInterpolatedColor(hexStart, hexEnd, ratio) {
             const cStart = parseRGB(hexStart);
             const cEnd = parseRGB(hexEnd);
-            const r = Math.round(lerp(cStart.r, cEnd.r, ratio));
-            const g = Math.round(lerp(cStart.g, cEnd.g, ratio));
-            const b = Math.round(lerp(cStart.b, cEnd.b, ratio));
+            const r = Math.round((1 - ratio) * cStart.r + ratio * cEnd.r);
+            const g = Math.round((1 - ratio) * cStart.g + ratio * cEnd.g);
+            const b = Math.round((1 - ratio) * cStart.b + ratio * cEnd.b);
             return `rgb(${r}, ${g}, ${b})`;
         }
 
@@ -630,21 +581,25 @@
             const clockEl = document.getElementById('clock');
             const ampmEl = document.getElementById('ampm');
 
-            let color = "#00ffff"; // Color Cyan Base
+            let color = "#00ffff"; // Default Cyan
+            let ampmColor = "#77B8ED"; // Default Light Blue AM/PM
             let flash = 0;
 
             // --- BLOQUES HORARIOS Y COLORES DOMINGO ---
             if (day === 0) {
                 if (evalTime >= 480 && evalTime < 510) {
                     const ratio = (evalTime - 480) / (510 - 480);
-                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio); // Green to Yellow
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 510 && evalTime < 560) {
                     const ratio = (evalTime - 510) / (560 - 510);
-                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio); // Yellow to Red
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 561 && evalTime < 583) {
-                    color = "#FF0000"; 
+                    color = "#FF0000"; // Solid Red
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 583 && evalTime < 584) {
                     flash = 2000;      
@@ -652,16 +607,20 @@
                 else if (evalTime >= 584 && evalTime < 585) {
                     flash = 1000;      
                 }
+                // Segundo Servicio Domingo
                 else if (evalTime >= 630 && evalTime < 660) {
                     const ratio = (evalTime - 630) / (660 - 630);
                     color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 661 && evalTime < 720) {
                     const ratio = (evalTime - 661) / (720 - 661);
                     color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 721 && evalTime < 748) {
                     color = "#FF0000"; 
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 748 && evalTime < 749) {
                     flash = 2000;      
@@ -676,13 +635,16 @@
                 if (evalTime >= 1170 && evalTime < 1211) { // 7:30 PM - 8:11 PM
                     const ratio = (evalTime - 1170) / (1211 - 1170);
                     color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 1211 && evalTime < 1242) { // 8:11 PM - 8:42 PM
                     const ratio = (evalTime - 1211) / (1242 - 1211);
                     color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 1242 && evalTime < 1258) { // 8:42 PM - 8:58 PM
                     color = "#FF0000"; 
+                    ampmColor = color;
                 } 
                 else if (evalTime >= 1258 && evalTime < 1259) { // 8:58 PM - 8:59 PM
                     flash = 2000;      
@@ -692,13 +654,21 @@
                 }
             }
 
+            // Lógica de destello (flash)
             if (flash > 0) {
                 const tick = Math.floor(now.getTime() / (flash / 2));
                 color = (tick % 2 === 0) ? "#FF0000" : "#FFFFFF";
+                ampmColor = color;
             }
 
+            // APLICACIÓN DEL COLOR Y REPINTADO
             if (prevColorStr !== color) {
                 clockEl.style.color = color;
+                ampmEl.style.color = ampmColor;
+                
+                // Forzar repintado del texto (truco para WebKit browsers)
+                clockEl.style.textShadow = `0 0 1px ${color}`; 
+                
                 prevColorStr = color;
             }
 
@@ -738,7 +708,7 @@
                 prevFullDate = fullDate;
             }
 
-            // --- LÓGICA DE BARRA DE PROGRESO DE SIMULACIÓN ---
+            // BARRA DE PROGRESO DEL SIMULADOR
             if (manualMode) {
                 let percent = 0;
                 let activeColor = "#00ffff";
@@ -756,19 +726,10 @@
                     }
                 }
 
-                if (percent < 5) {
-                    activeColor = '#00ffff';
-                    phaseText = "Esperando Servicio:";
-                } else if (percent < 45) {
-                    activeColor = '#00FF00';
-                    phaseText = "Apertura en Progreso:";
-                } else if (percent < 80) {
-                    activeColor = '#FFFF00';
-                    phaseText = "Mensaje en Progreso:";
-                } else {
-                    activeColor = '#FF0000';
-                    phaseText = "Cierre en Progreso:";
-                }
+                if (percent < 5) { activeColor = '#00ffff'; phaseText = "Esperando Servicio:"; } 
+                else if (percent < 45) { activeColor = '#00FF00'; phaseText = "Apertura en Progreso:"; } 
+                else if (percent < 80) { activeColor = '#FFFF00'; phaseText = "Mensaje en Progreso:"; } 
+                else { activeColor = '#FF0000'; phaseText = "Cierre en Progreso:"; }
 
                 document.getElementById('progress-phase-label').innerText = phaseText;
                 document.getElementById('progress-percent-label').innerText = `${percent}%`;
@@ -859,7 +820,6 @@
             }
         }
 
-        // Ejecutar inmediatamente
         setInterval(updateDisplay, 100);
         updateDisplay();
         fetchWeather();
