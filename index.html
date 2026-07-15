@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iglesia de Dios - Kiosk Display</title>
+    
+    <!-- Meta tags para Kioscos y Progressive Web Apps (PWA) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000">
+    
+    <style>
+        @font-face {
+            font-family: 'Digital-7';
+            src: url('digital-7.ttf') format('truetype');
+            font-display: swap;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: #000;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px; /* Reducido levemente para dar más espacio de pantalla */
+            transform: translate3d(0, 0, 0);
+            -webkit-transform: translate3d(0, 0, 0);
+            user-select: none;
+        }
+
+        .video-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -2;
+            will-change: transform;
+            transform: translate3d(0, 0, 0);
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%); /* Fondo si falla el video */
+        }
+
+        .dark-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: -1;
+        }
+
+        /* Sección superior: Ahora ocupa el 65% de la altura total para empujar el reloj hacia arriba */
+        .top-section {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 65vh; 
+            margin-bottom: auto;
+            position: relative;
+        }
+
+        /* Contenedor del reloj con distribución elástica y alineación por base de línea */
+        .clock-wrapper { 
+            display: flex; 
+            align-items: baseline; 
+            justify-content: center;
+            gap: 20px; 
+            width: 100%;
+        }
+
+        #clock {
+            font-family: 'Digital-7', monospace, sans-serif;
+            -webkit-text-stroke: 4px #ffffff; 
+            text-rendering: optimizeSpeed; 
+            -webkit-font-smoothing: antialiased;
+            transition: color 0.2s ease;
+            color: #00ffff; 
+            /* Aumentado a un límite de 52vh para que se vea sustancialmente más grande */
+            font-size: min(45vw, 78vh);
+            line-height: 0.85;
+            margin: 0;
+        }
+
+        #ampm { 
+            font-family: 'Fastelar', 'Impact', sans-serif;
+            color: #77B8ED;
+            /* Escalado proporcionalmente más grande */
+            font-size: min(6vw, 10vh);
+            -webkit-text-stroke: 1px #ffffff; 
+            align-self: flex-end;
+            margin-bottom: 3.5vh; 
+        }
+
+        /* Bloque de Información: Altura reducida de 220px a 165px */
+        .bottom-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            height: 165px; 
+            width: 100%;
+            z-index: 10;
+        }
+
+        .center-info {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            border-radius: 16px;
+            background: rgba(15, 15, 15, 0.4); 
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+
+        .logo-display {
+            position: absolute;
+            width: 55%; /* Reducido levemente para ajustarse al bloque más bajo */
+            height: auto;
+            max-height: 80%;
+            opacity: 0.35; 
+            z-index: 0;
+            object-fit: contain;
+        }
+
+        .logo-fallback {
+            position: absolute;
+            width: 40%;
+            height: auto;
+            opacity: 0.15;
+            z-index: 0;
+            fill: #ffffff;
+            display: none;
+        }
+
+        .date-display { 
+            position: relative;
+            z-index: 1;
+            text-align: center; 
+            font-size: 1.6rem; /* Reducido proporcionalmente */
+            font-weight: bold;
+            line-height: 1.2; 
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.8);
+        }
+
+        #day-name {
+            font-size: 1.2em;
+            color: #FFA500;
+        }
+
+        .weather-card {
+            background: rgba(15, 15, 15, 0.85); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            padding: 12px 18px; /* Paddings reducidos */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transform: translate3d(0, 0, 0);
+        }
+
+        .current-weather-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .current-temp-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .current-temp-container svg { width: 36px; height: 36px; } /* SVG más pequeño */
+        .current-temp { font-size: 2.3rem; font-weight: bold; } /* Fuente más compacta */
+        .feels-like { font-size: 0.85rem; opacity: 0.7; }
+        .weather-condition-text { font-size: 1rem; font-weight: 500; }
+        .weather-location {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px;
+        }
+
+        .forecast-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .daily-container {
+            display: flex;
+            gap: 8px;
+            height: 100%;
+        }
+        .daily-item {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .daily-date { font-size: 0.75rem; opacity: 0.7; text-align: center; }
+        .daily-icon svg { width: 26px; height: 26px; }
+        .daily-temps {
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .daily-low { font-size: 0.75rem; opacity: 0.5; }
+
+        #config-btn { 
+            position: absolute; 
+            top: 30px; 
+            left: 30px; 
+            width: 45px;
+            height: 45px;
+            background: rgba(43, 58, 103, 0.6); 
+            color: white; 
+            border-radius: 50%; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer; 
+            z-index: 100; 
+            font-size: 1.4rem;
+            transition: background 0.2s;
+        }
+        #config-btn:hover { background: rgba(43, 58, 103, 1); }
+
+        #config-panel { 
+            position: absolute; 
+            top: 85px; 
+            left: 30px; 
+            background: #1a1a2e; 
+            padding: 20px; 
+            border-radius: 12px; 
+            display: none; 
+            color: white; 
+            width: 360px; 
+            font-size: 0.9rem; 
+            max-height: 75vh; 
+            overflow-y: auto; 
+            z-index: 101;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .config-opt { padding: 10px 0; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .config-header { font-weight: bold; color: #00ffff; border-bottom: 1px solid #00ffff; padding-bottom: 5px; margin-bottom: 5px; font-size: 0.95rem;}
+        .slider-wrapper { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .slider-control { width: 100%; accent-color: #00ffff; cursor: pointer; height: 6px; border-radius: 3px; }
+        .progress-bar-container { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: 4px; overflow: hidden; margin-top: 6px; border: 1px solid #333; }
+        .progress-bar-fill { width: 0%; height: 100%; background-color: #00FF00; transition: width 0.1s linear, background-color 0.2s ease; }
+        
+        select.config-select {
+            background: #2b3a67;
+            color: white;
+            border: 1px solid #333;
+            padding: 4px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .btn-action {
+            background: #2b3a67;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .btn-action:hover {
+            background: #3d5294;
+        }
+
+        /* Banner discreto indicando actualización */
+        #update-banner {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: #00FF00;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 200;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0,255,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <video autoplay loop muted playsinline class="video-background" id="bg-video">
+        <source src="video.mp4" type="video/mp4">
+    </video>
+    <div class="dark-overlay"></div>
+
+    <div class="top-section">
+        <div class="clock-wrapper" id="clock-container">
+            <div id="clock">12:00</div>
+            <div id="ampm">AM</div>
+        </div>
+    </div>
+
+    <div class="bottom-section">
+        <div class="weather-card">
+            <div class="current-weather-main">
+                <div class="current-temp-container">
+                    <span id="current-icon"></span>
+                    <span class="current-temp" id="current-temp">--°<span style="font-size: 1.5rem">F</span></span>
+                </div>
+                <div class="feels-like" id="feels-like">Feels like --°</div>
+            </div>
+            <div>
+                <div class="weather-condition-text" id="weather-desc">Cargando clima...</div>
+                <div class="weather-location">
+                    <svg style="width: 16px; height: 16px; fill: currentColor;" viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    Uniondale, US
+                </div>
+            </div>
+        </div>
+
+        <div class="center-info">
+            <img src="logo.png" class="logo-display" id="logo-img" alt="Iglesia de Dios" onerror="handleLogoError()">
+            <svg class="logo-fallback" id="logo-svg" viewBox="0 0 24 24">
+                <path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6zm-1 5h2v2h3v2h-3v4h-2v-4H8v-2h3v-2z"/>
+            </svg>
+            <div class="date-display">
+                <div id="day-name"></div>
+                <div id="full-date"></div>
+            </div>
+        </div>
+
+        <div class="weather-card">
+            <div class="forecast-title">Pronóstico de 3 Días</div>
+            <div class="daily-container" id="daily-container"></div>
+        </div>
+    </div>
+
+    <div id="hourly-container" style="display: none;"></div>
+
+    <div id="update-banner">Nueva versión detectada, actualizando...</div>
+
+    <div id="config-btn" onclick="togglePanel()">⚙️</div>
+    <div id="config-panel">
+        <div class="config-header">CONFIGURACIÓN GENERAL</div>
+        <div class="config-opt">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; width: 100%;">
+                <input type="checkbox" id="live-mode-chk" checked onchange="toggleLiveMode(this.checked)" style="width: 18px; height: 18px; accent-color: #00ffff;">
+                <strong>Live Mode (Tiempo Real)</strong>
+            </label>
+        </div>
+
+        <div class="config-opt">
+            <span>Controles Kiosco:</span>
+            <button class="btn-action" onclick="toggleFullScreen()">Pantalla Completa ⛶</button>
+        </div>
+
+        <div class="config-opt">
+            <span>Código de Netlify:</span>
+            <button class="btn-action" onclick="forceCheckUpdate()">Buscar Update ↻</button>
+        </div>
+
+        <!-- SIMULADOR DE COLORES Y HORAS -->
+        <div class="config-header" style="margin-top: 15px;">SIMULADOR DE COLORES Y SERVICIOS</div>
+        
+        <div id="sim-day-container" class="config-opt" style="display: none;">
+            <span>Simular Día de Culto:</span>
+            <select id="sim-day-select" class="config-select" onchange="handleSimDayChange(this.value)">
+                <option value="0">Domingo (Sunday)</option>
+                <option value="3">Miércoles (Wednesday)</option>
+            </select>
+        </div>
+        
+        <div id="manual-slider-container" class="slider-wrapper" style="display: none; border-top: 1px dashed #333; padding-top: 15px;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.85rem; color: #a0aec0;">
+                <span>Hora Simulada:</span>
+                <span id="slider-time-label" style="color: #00ffff;">08:00 AM</span>
+            </div>
+            
+            <input type="range" id="time-slider" min="450" max="780" value="480" oninput="handleSliderChange(this.value)" class="slider-control">
+            
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #708090;">
+                <span id="slider-min-label">7:30 AM</span>
+                <span id="slider-max-label">1:00 PM</span>
+            </div>
+
+            <div style="margin-top: 8px;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #cbd5e1; margin-bottom: 2px;">
+                    <span id="progress-phase-label">Estado de Culto:</span>
+                    <span id="progress-percent-label">0%</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="sim-progress-fill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+            <div style="font-size: 0.75rem; color: #8a8ab0; text-align: center; margin-top: 4px;">
+                * Deslice para simular el cambio de color del reloj
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- COLD CRASH PROTECTION ---
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && (event.reason.name === 'AbortError' || event.reason.message === 'The operation was aborted.')) {
+                event.preventDefault();
+                console.warn('Silenced runtime AbortError rejection during active kiosk loop.');
+            }
+        });
+
+        // --- CONTROL DE VERSIONES PARA AUTO-ACTUALIZAR ---
+        const CURRENT_APP_VERSION = "1.0.6"; // Versión 1.0.6 empujada con ajustes de tamaño para la TV
+
+        let manualMode = false;
+        let simulatedDay = 0; // 0 = Domingo, 3 = Miércoles
+        let simulatedMinutes = 480; 
+
+        let prevTimeStr = "";
+        let prevColorStr = "";
+        let prevAmpmStr = "";
+        let prevDayName = "";
+        let prevFullDate = "";
+
+        window.addEventListener('load', () => {
+            const video = document.getElementById('bg-video');
+            if (video) {
+                video.play().catch(err => {
+                    if (err.name !== 'AbortError') {
+                        document.body.addEventListener('click', () => { 
+                            video.play().catch(() => {}); 
+                        }, { once: true });
+                    }
+                });
+            }
+            
+            // Intervalo de revisión de código (cada 15 minutos)
+            setInterval(checkAppUpdate, 15 * 60 * 1000);
+            
+            // Reinicio diario preventivo a las 3:00 AM
+            scheduleDailyReload();
+        });
+
+        // Activar pantalla completa al hacer doble click
+        document.body.addEventListener('dblclick', () => {
+            toggleFullScreen();
+        });
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error al activar Fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function handleLogoError() {
+            document.getElementById('logo-img').style.display = 'none';
+            document.getElementById('logo-svg').style.display = 'block';
+        }
+
+        // --- SISTEMA AUTO-REFRESH ANTE CAMBIOS EN NETLIFY ---
+        async function checkAppUpdate() {
+            try {
+                const fetchUrl = window.location.origin + window.location.pathname + '?nocache=' + Date.now();
+                const response = await fetch(fetchUrl);
+                if (!response.ok) return;
+                
+                const text = await response.text();
+                const match = text.match(/const\s+CURRENT_APP_VERSION\s*=\s*["']([^"']+)["']/);
+                
+                if (match && match[1]) {
+                    const remoteVersion = match[1];
+                    console.log(`Versión actual: ${CURRENT_APP_VERSION} | Remota: ${remoteVersion}`);
+                    
+                    if (remoteVersion !== CURRENT_APP_VERSION) {
+                        const banner = document.getElementById('update-banner');
+                        banner.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            window.location.href = window.location.origin + window.location.pathname + '?v=' + remoteVersion;
+                        }, 3000);
+                    }
+                }
+            } catch (err) {
+                console.error("Error comprobando actualización:", err);
+            }
+        }
+
+        function forceCheckUpdate() {
+            const banner = document.getElementById('update-banner');
+            banner.innerText = "Buscando actualizaciones...";
+            banner.style.display = 'block';
+            setTimeout(() => {
+                checkAppUpdate().then(() => {
+                    banner.innerText = "Aplicación al día";
+                    setTimeout(() => banner.style.display = 'none', 3000);
+                }).catch(() => {
+                    banner.innerText = "Error al buscar actualización";
+                    setTimeout(() => banner.style.display = 'none', 3000);
+                });
+            }, 1000);
+        }
+
+        function scheduleDailyReload() {
+            const now = new Date();
+            const night = new Date(
+                now.getFullYear(),
+                now.getMonth(),
+                now.getDate() + 1,
+                3, 0, 0
+            );
+            const msToMidnight = night.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, msToMidnight);
+        }
+
+        function togglePanel() { 
+            const panel = document.getElementById('config-panel'); 
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block'; 
+        }
+        
+        function toggleLiveMode(isLive) { 
+            manualMode = !isLive; 
+            document.getElementById('manual-slider-container').style.display = isLive ? 'none' : 'flex';
+            document.getElementById('sim-day-container').style.display = isLive ? 'none' : 'flex';
+            
+            if (!isLive) {
+                handleSimDayChange(document.getElementById('sim-day-select').value);
+            } else {
+                updateDisplay(); 
+            }
+        }
+
+        function handleSimDayChange(dayVal) {
+            simulatedDay = parseInt(dayVal);
+            const slider = document.getElementById('time-slider');
+            
+            if (simulatedDay === 0) {
+                // Domingo: 7:30 AM a 1:00 PM
+                slider.min = 450;
+                slider.max = 780;
+                slider.value = 480; // Defecto 8:00 AM
+                document.getElementById('slider-min-label').innerText = "7:30 AM";
+                document.getElementById('slider-max-label').innerText = "1:00 PM";
+            } else if (simulatedDay === 3) {
+                // Miércoles: 7:00 PM a 10:00 PM
+                slider.min = 1140;
+                slider.max = 1320;
+                slider.value = 1170; // Defecto 7:30 PM
+                document.getElementById('slider-min-label').innerText = "7:00 PM";
+                document.getElementById('slider-max-label').innerText = "10:00 PM";
+            }
+            
+            simulatedMinutes = parseInt(slider.value);
+            document.getElementById('slider-time-label').innerText = minutesToTimeStr(simulatedMinutes);
+            updateDisplay();
+        }
+
+        function handleSliderChange(val) {
+            simulatedMinutes = parseInt(val);
+            document.getElementById('slider-time-label').innerText = minutesToTimeStr(simulatedMinutes);
+            updateDisplay();
+        }
+
+        function minutesToTimeStr(totalMinutes) {
+            let h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            const suffix = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m.toString().padStart(2, '0')} ${suffix}`;
+        }
+
+        function parseRGB(hex) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return { r, g, b };
+        }
+
+        // Interpola colores de forma fluida
+        function getInterpolatedColor(hexStart, hexEnd, ratio) {
+            const cStart = parseRGB(hexStart);
+            const cEnd = parseRGB(hexEnd);
+            const r = Math.round(lerp(cStart.r, cEnd.r, ratio));
+            const g = Math.round(lerp(cStart.g, cEnd.g, ratio));
+            const b = Math.round(lerp(cStart.b, cEnd.b, ratio));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function updateDisplay() {
+            const now = new Date();
+            const day = manualMode ? simulatedDay : now.getDay();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            const evalTime = manualMode ? simulatedMinutes : currentMinutes;
+
+            const clockEl = document.getElementById('clock');
+            const ampmEl = document.getElementById('ampm');
+
+            let color = "#00ffff"; // Color Cyan Base
+            let flash = 0;
+
+            // --- BLOQUES HORARIOS Y COLORES DOMINGO ---
+            if (day === 0) {
+                if (evalTime >= 480 && evalTime < 510) {
+                    const ratio = (evalTime - 480) / (510 - 480);
+                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                } 
+                else if (evalTime >= 510 && evalTime < 560) {
+                    const ratio = (evalTime - 510) / (560 - 510);
+                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                } 
+                else if (evalTime >= 561 && evalTime < 583) {
+                    color = "#FF0000"; 
+                } 
+                else if (evalTime >= 583 && evalTime < 584) {
+                    flash = 2000;      
+                } 
+                else if (evalTime >= 584 && evalTime < 585) {
+                    flash = 1000;      
+                }
+                else if (evalTime >= 630 && evalTime < 660) {
+                    const ratio = (evalTime - 630) / (660 - 630);
+                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                } 
+                else if (evalTime >= 661 && evalTime < 720) {
+                    const ratio = (evalTime - 661) / (720 - 661);
+                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                } 
+                else if (evalTime >= 721 && evalTime < 748) {
+                    color = "#FF0000"; 
+                } 
+                else if (evalTime >= 748 && evalTime < 749) {
+                    flash = 2000;      
+                } 
+                else if (evalTime >= 749 && evalTime < 750) {
+                    flash = 1000;      
+                }
+            }
+
+            // --- BLOQUES HORARIOS Y COLORES MIÉRCOLES ---
+            if (day === 3) {
+                if (evalTime >= 1170 && evalTime < 1211) { // 7:30 PM - 8:11 PM
+                    const ratio = (evalTime - 1170) / (1211 - 1170);
+                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
+                } 
+                else if (evalTime >= 1211 && evalTime < 1242) { // 8:11 PM - 8:42 PM
+                    const ratio = (evalTime - 1211) / (1242 - 1211);
+                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
+                } 
+                else if (evalTime >= 1242 && evalTime < 1258) { // 8:42 PM - 8:58 PM
+                    color = "#FF0000"; 
+                } 
+                else if (evalTime >= 1258 && evalTime < 1259) { // 8:58 PM - 8:59 PM
+                    flash = 2000;      
+                } 
+                else if (evalTime >= 1259 && evalTime < 1260) { // 8:59 PM - 9:00 PM
+                    flash = 1000;      
+                }
+            }
+
+            if (flash > 0) {
+                const tick = Math.floor(now.getTime() / (flash / 2));
+                color = (tick % 2 === 0) ? "#FF0000" : "#FFFFFF";
+            }
+
+            if (prevColorStr !== color) {
+                clockEl.style.color = color;
+                prevColorStr = color;
+            }
+
+            let displayHour, displayMinute, displayAmPm;
+            if (manualMode) {
+                displayHour = Math.floor(simulatedMinutes / 60);
+                displayMinute = simulatedMinutes % 60;
+                displayAmPm = displayHour >= 12 ? 'PM' : 'AM';
+                displayHour = displayHour % 12 || 12;
+            } else {
+                displayHour = now.getHours();
+                displayMinute = now.getMinutes();
+                displayAmPm = displayHour >= 12 ? 'PM' : 'AM';
+                displayHour = displayHour % 12 || 12;
+            }
+
+            const timeStr = `${displayHour}:${displayMinute.toString().padStart(2, '0')}`;
+            if (prevTimeStr !== timeStr) {
+                clockEl.innerText = timeStr;
+                prevTimeStr = timeStr;
+            }
+
+            if (prevAmpmStr !== displayAmPm) {
+                ampmEl.innerText = displayAmPm;
+                prevAmpmStr = displayAmPm;
+            }
+            
+            const dayName = now.toLocaleDateString('es-ES', { weekday: 'long' });
+            if (prevDayName !== dayName) {
+                document.getElementById('day-name').innerText = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+                prevDayName = dayName;
+            }
+
+            const fullDate = now.toLocaleDateString('es-ES', { month: 'long', day: 'numeric', year: 'numeric' });
+            if (prevFullDate !== fullDate) {
+                document.getElementById('full-date').innerText = fullDate;
+                prevFullDate = fullDate;
+            }
+
+            // --- LÓGICA DE BARRA DE PROGRESO DE SIMULACIÓN ---
+            if (manualMode) {
+                let percent = 0;
+                let activeColor = "#00ffff";
+                let phaseText = "Estado de Culto:";
+
+                if (simulatedDay === 0) {
+                    if (evalTime >= 480 && evalTime <= 585) {
+                        percent = Math.round(((evalTime - 480) / (585 - 480)) * 100);
+                    } else if (evalTime >= 630 && evalTime <= 750) {
+                        percent = Math.round(((evalTime - 630) / (750 - 630)) * 100);
+                    }
+                } else if (simulatedDay === 3) {
+                    if (evalTime >= 1170 && evalTime <= 1260) {
+                        percent = Math.round(((evalTime - 1170) / (1260 - 1170)) * 100);
+                    }
+                }
+
+                if (percent < 5) {
+                    activeColor = '#00ffff';
+                    phaseText = "Esperando Servicio:";
+                } else if (percent < 45) {
+                    activeColor = '#00FF00';
+                    phaseText = "Apertura en Progreso:";
+                } else if (percent < 80) {
+                    activeColor = '#FFFF00';
+                    phaseText = "Mensaje en Progreso:";
+                } else {
+                    activeColor = '#FF0000';
+                    phaseText = "Cierre en Progreso:";
+                }
+
+                document.getElementById('progress-phase-label').innerText = phaseText;
+                document.getElementById('progress-percent-label').innerText = `${percent}%`;
+                document.getElementById('sim-progress-fill').style.width = `${percent}%`;
+                document.getElementById('sim-progress-fill').style.backgroundColor = activeColor;
+            }
+        }
+
+        const weatherDetails = {
+            0: { desc: "Cielo Despejado", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>` },
+            1: { desc: "Mayormente Despejado", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#FFD700" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2"/></svg>` },
+            2: { desc: "Parcialmente Nublado", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#B0C4DE" stroke-width="2"><path d="M17 18a5 5 0 0 0-1-9.9 7.5 7.5 0 1 0-12.9 5.4A5 5 0 0 0 4 18z"/></svg>` },
+            3: { desc: "Cubierto", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#87CEEB" stroke-width="2"><path d="M12 18h5a5 5 0 0 0 .5-9.97 7 7 0 1 0-13.4 3.23A5 5 0 0 0 8 18z"/></svg>` },
+            45: { desc: "Niebla", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#A9A9A9" stroke-width="2"><path d="M5 10h14M3 14h18M7 18h10"/></svg>` },
+            51: { desc: "Llovizna Ligera", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#4682B4" stroke-width="2"><path d="M17 18a5 5 0 0 0-1-9.9 7.5 7.5 0 1 0-12.9 5.4A5 5 0 0 0 4 18z"/><path d="M10 20v2M14 20v2"/></svg>` },
+            61: { desc: "Lluvia Ligera", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#1E90FF" stroke-width="2"><path d="M17 18a5 5 0 0 0-1-9.9 7.5 7.5 0 1 0-12.9 5.4A5 5 0 0 0 4 18z"/><path d="M8 20l-2 2M12 20l-2 2M16 20l-2 2"/></svg>` },
+            63: { desc: "Lluvia Moderada", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#1E90FF" stroke-width="2"><path d="M12 18h5a5 5 0 0 0 .5-9.97 7 7 0 1 0-13.4 3.23A5 5 0 0 0 8 18z"/><path d="M8 20l-2 2M12 20l-2 2M16 20l-2 2"/></svg>` },
+            95: { desc: "Tormenta", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#FFA500" stroke-width="2"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 8.58"/><path d="m13 11-4 6h4l-1 5 6-7h-5z"/></svg>` }
+        };
+
+        function getWeatherObj(code) {
+            return weatherDetails[code] || { desc: "Cubierto", icon: `<svg viewBox="0 0 24 24" fill="none" stroke="#87CEEB" stroke-width="2"><path d="M12 18h5a5 5 0 0 0 .5-9.97 7 7 0 1 0-13.4 3.23A5 5 0 0 0 8 18z"/></svg>` };
+        }
+
+        async function fetchWeather() {
+            try {
+                const lat = "40.7004";
+                const lon = "-73.5929";
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weather_code&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=3`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error();
+                const data = await response.json();
+
+                const cur = data.current;
+                const curInfo = getWeatherObj(cur.weather_code);
+                document.getElementById('current-icon').innerHTML = curInfo.icon;
+                document.getElementById('current-temp').innerHTML = `${Math.round(cur.temperature_2m)}°<span style="font-size: 1.5rem">F</span>`;
+                document.getElementById('feels-like').innerText = `Feels like ${Math.round(cur.apparent_temperature)}°`;
+                document.getElementById('weather-desc').innerText = curInfo.desc;
+
+                const hourlyContainer = document.getElementById('hourly-container');
+                hourlyContainer.innerHTML = '';
+                const currentHourIndex = new Date().getHours();
+                for (let i = 0; i < 6; i++) {
+                    const idx = currentHourIndex + i * 2;
+                    if (idx < data.hourly.time.length) {
+                        const hTime = new Date(data.hourly.time[idx]);
+                        let hourLabel = hTime.toLocaleTimeString('es-ES', { hour: 'numeric', hour12: true });
+                        const hInfo = getWeatherObj(data.hourly.weather_code[idx]);
+                        const hTemp = Math.round(data.hourly.temperature_2m[idx]);
+
+                        const hourlyItem = document.createElement('div');
+                        hourlyItem.className = 'hourly-item';
+                        hourlyItem.innerHTML = `
+                            <div class="hourly-time">${hourLabel}</div>
+                            <div class="hourly-icon">${hInfo.icon}</div>
+                            <div class="hourly-temp">${hTemp}°</div>
+                        `;
+                        hourlyContainer.appendChild(hourlyItem);
+                    }
+                }
+
+                const dailyContainer = document.getElementById('daily-container');
+                dailyContainer.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const dTime = new Date(data.daily.time[i]);
+                    dTime.setMinutes(dTime.getMinutes() + dTime.getTimezoneOffset());
+                    const dLabel = dTime.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' });
+                    const dInfo = getWeatherObj(data.daily.weather_code[i]);
+                    const dMax = Math.round(data.daily.temperature_2m_max[i]);
+                    const dMin = Math.round(data.daily.temperature_2m_min[i]);
+
+                    const dailyItem = document.createElement('div');
+                    dailyItem.className = 'daily-item';
+                    dailyItem.innerHTML = `
+                        <div class="daily-date">${dLabel}</div>
+                        <div class="daily-icon">${dInfo.icon}</div>
+                        <div class="daily-temps">
+                            <span>${dMax}°</span>
+                            <span class="daily-low">${dMin}°</span>
+                        </div>
+                    `;
+                    dailyContainer.appendChild(dailyItem);
+                }
+            } catch (err) {
+                document.getElementById('weather-desc').innerText = "Weather update delayed";
+            }
+        }
+
+        // Ejecutar inmediatamente
+        setInterval(updateDisplay, 100);
+        updateDisplay();
+        fetchWeather();
+        setInterval(fetchWeather, 1800000); 
+    </script>
+</body>
+</html>
