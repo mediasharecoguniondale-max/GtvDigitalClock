@@ -431,8 +431,8 @@
             }
         });
 
-        // --- VERSIÓN 1.0.8: COLORES RESTAURADOS ---
-        const CURRENT_APP_VERSION = "1.0.8"; 
+        // --- VERSIÓN 1.0.9: COLORES RESTAURADOS ---
+        const CURRENT_APP_VERSION = "1.0.9"; 
 
         let manualMode = false;
         let simulatedDay = 0; // 0 = Domingo, 3 = Miércoles
@@ -613,12 +613,12 @@
                     color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 661 && evalTime < 720) {
-                    const ratio = (evalTime - 661) / (720 - 661);
+                else if (evalTime >= 661 && evalTime < 735) {
+                    const ratio = (evalTime - 661) / (735 - 661);
                     color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 721 && evalTime < 748) {
+                else if (evalTime >= 736 && evalTime < 748) {
                     color = "#FF0000"; 
                     ampmColor = color;
                 } 
