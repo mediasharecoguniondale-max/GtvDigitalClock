@@ -35,6 +35,18 @@
             user-select: none;
         }
 
+        #app-version {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.35); /* Gris/Blanco suave para ser discreto */
+            z-index: 150;
+            font-family: system-ui, sans-serif;
+            letter-spacing: 0.5px;
+        }
+
         .video-background {
             position: absolute;
             top: 0;
@@ -83,9 +95,9 @@
             -webkit-text-stroke: 4px #ffffff; 
             text-rendering: optimizeSpeed; 
             -webkit-font-smoothing: antialiased;
-            transition: color 0.2s ease, text-shadow 0.2s ease; /* Transición suave */
+            transition: color 0.2s ease, text-shadow 0.2s ease;
             color: #00ffff; 
-            font-size: min(45vw, 78vh); 
+            font-size: min(32vw, 55vh); 
             line-height: 0.72; 
             margin-top: -1vh; 
         }
@@ -313,6 +325,8 @@
 </head>
 <body>
 
+    <div id="app-version">v0.0.0</div>
+
     <video autoplay loop muted playsinline class="video-background" id="bg-video">
         <source src="video.mp4" type="video/mp4">
     </video>
@@ -431,11 +445,11 @@
             }
         });
 
-        // --- VERSIÓN 1.0.9: COLORES RESTAURADOS ---
-        const CURRENT_APP_VERSION = "1.0.9"; 
+        // --- VERSIÓN 1.1.0: SOLUCIONADO EL HUECO DE LAS 12:15 PM ---
+        const CURRENT_APP_VERSION = "1.1.0"; 
 
         let manualMode = false;
-        let simulatedDay = 0; // 0 = Domingo, 3 = Miércoles
+        let simulatedDay = 0; 
         let simulatedMinutes = 480; 
 
         let prevTimeStr = "";
@@ -445,6 +459,8 @@
         let prevFullDate = "";
 
         window.addEventListener('load', () => {
+            document.getElementById('app-version').innerText = `v${CURRENT_APP_VERSION}`;
+
             const video = document.getElementById('bg-video');
             if (video) {
                 video.play().catch(err => {
@@ -581,24 +597,24 @@
             const clockEl = document.getElementById('clock');
             const ampmEl = document.getElementById('ampm');
 
-            let color = "#00ffff"; // Default Cyan
-            let ampmColor = "#77B8ED"; // Default Light Blue AM/PM
+            let color = "#00ffff"; 
+            let ampmColor = "#77B8ED"; 
             let flash = 0;
 
-            // --- BLOQUES HORARIOS Y COLORES DOMINGO ---
             if (day === 0) {
                 if (evalTime >= 480 && evalTime < 510) {
                     const ratio = (evalTime - 480) / (510 - 480);
-                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio); // Green to Yellow
+                    color = getInterpolatedColor("#00FF00", "#FFFF00", ratio); 
                     ampmColor = color;
                 } 
                 else if (evalTime >= 510 && evalTime < 560) {
                     const ratio = (evalTime - 510) / (560 - 510);
-                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio); // Yellow to Red
+                    color = getInterpolatedColor("#FFFF00", "#FF0000", ratio); 
                     ampmColor = color;
                 } 
-                else if (evalTime >= 561 && evalTime < 583) {
-                    color = "#FF0000"; // Solid Red
+                // APRENDIZAJE: Corregidos los límites inferiores (cambiado de 561 a 560) para evitar el "hueco"
+                else if (evalTime >= 560 && evalTime < 583) {
+                    color = "#FF0000"; 
                     ampmColor = color;
                 } 
                 else if (evalTime >= 583 && evalTime < 584) {
@@ -607,18 +623,18 @@
                 else if (evalTime >= 584 && evalTime < 585) {
                     flash = 1000;      
                 }
-                // Segundo Servicio Domingo
                 else if (evalTime >= 630 && evalTime < 660) {
                     const ratio = (evalTime - 630) / (660 - 630);
                     color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 661 && evalTime < 735) {
-                    const ratio = (evalTime - 661) / (735 - 661);
+                // APRENDIZAJE: Corregidos los límites (de 661 a 660, y de 736 a 735) para cubrir perfectamente el minuto 735 (12:15 PM)
+                else if (evalTime >= 660 && evalTime < 735) {
+                    const ratio = (evalTime - 660) / (735 - 660);
                     color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 736 && evalTime < 748) {
+                else if (evalTime >= 735 && evalTime < 748) {
                     color = "#FF0000"; 
                     ampmColor = color;
                 } 
@@ -630,45 +646,39 @@
                 }
             }
 
-            // --- BLOQUES HORARIOS Y COLORES MIÉRCOLES ---
             if (day === 3) {
-                if (evalTime >= 1170 && evalTime < 1211) { // 7:30 PM - 8:11 PM
+                if (evalTime >= 1170 && evalTime < 1211) { 
                     const ratio = (evalTime - 1170) / (1211 - 1170);
                     color = getInterpolatedColor("#00FF00", "#FFFF00", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 1211 && evalTime < 1242) { // 8:11 PM - 8:42 PM
+                else if (evalTime >= 1211 && evalTime < 1242) { 
                     const ratio = (evalTime - 1211) / (1242 - 1211);
                     color = getInterpolatedColor("#FFFF00", "#FF0000", ratio);
                     ampmColor = color;
                 } 
-                else if (evalTime >= 1242 && evalTime < 1258) { // 8:42 PM - 8:58 PM
+                else if (evalTime >= 1242 && evalTime < 1258) { 
                     color = "#FF0000"; 
                     ampmColor = color;
                 } 
-                else if (evalTime >= 1258 && evalTime < 1259) { // 8:58 PM - 8:59 PM
+                else if (evalTime >= 1258 && evalTime < 1259) { 
                     flash = 2000;      
                 } 
-                else if (evalTime >= 1259 && evalTime < 1260) { // 8:59 PM - 9:00 PM
+                else if (evalTime >= 1259 && evalTime < 1260) { 
                     flash = 1000;      
                 }
             }
 
-            // Lógica de destello (flash)
             if (flash > 0) {
                 const tick = Math.floor(now.getTime() / (flash / 2));
                 color = (tick % 2 === 0) ? "#FF0000" : "#FFFFFF";
                 ampmColor = color;
             }
 
-            // APLICACIÓN DEL COLOR Y REPINTADO
             if (prevColorStr !== color) {
                 clockEl.style.color = color;
                 ampmEl.style.color = ampmColor;
-                
-                // Forzar repintado del texto (truco para WebKit browsers)
                 clockEl.style.textShadow = `0 0 1px ${color}`; 
-                
                 prevColorStr = color;
             }
 
@@ -708,7 +718,6 @@
                 prevFullDate = fullDate;
             }
 
-            // BARRA DE PROGRESO DEL SIMULADOR
             if (manualMode) {
                 let percent = 0;
                 let activeColor = "#00ffff";
